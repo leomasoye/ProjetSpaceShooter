@@ -1,6 +1,7 @@
 export default class objet {
     x = 0;
     y = 0;
+    angle = 0; // Ajout d'un angle pour la rotation future
     couleur = "black";
     largeur = 5;
     hauteur = 5;
@@ -16,8 +17,13 @@ export default class objet {
     draw(ctx) {
         ctx.save();
 
+        ctx.translate(this.x, this.y);
+
+        ctx.rotate(this.angle);
+
         ctx.fillStyle = this.couleur;
-        ctx.arc(this.x, this.y, this.largeur / 2, 0, 2 * Math.PI);
+        ctx.beginPath();
+        ctx.arc(0, 0, this.largeur / 2, 0, 2 * Math.PI);
         ctx.fill();
 
         ctx.restore();

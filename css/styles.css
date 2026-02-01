@@ -20,6 +20,10 @@ img {
     width: 500px;
 }
 
+#gameInfos {
+    display: none;
+}
+
 main {
     text-align: center;
     padding: 20px;
@@ -34,7 +38,8 @@ h1 {
     text-shadow: 0 5px 15px rgba(234, 0, 255, 0.726);
 }
 
-p, h2 {
+p,
+h2 {
     color: #a2a2c2;
     font-weight: 300;
     margin-bottom: 30px;
@@ -47,7 +52,8 @@ p, h2 {
     justify-content: center;
 }
 
-button, input[type="button"] {
+button,
+input[type="button"] {
     background: #16213e;
     color: white;
     border: 2px solid #0f3460;
@@ -59,7 +65,8 @@ button, input[type="button"] {
     transition: all 0.3s ease;
 }
 
-button:hover, input[type="button"]:hover {
+button:hover,
+input[type="button"]:hover {
     background: #ae00ffb2;
     border-color: #940b94;
     transform: translateY(-3px);
