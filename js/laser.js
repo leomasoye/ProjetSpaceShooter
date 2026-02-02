@@ -1,9 +1,10 @@
 import objet from "./objet.js";
 
 export default class Laser extends objet {
-    constructor(x, y) {
-        super(x, y, "cyan", 5, 15);
-        this.speed = 10;
+    constructor(x, y, vy = -10, vx = 0, color = "cyan") {
+        super(x, y, color, 5, 15);
+        this.vy = vy;
+        this.vx = vx;
     }
 
     draw(ctx) {
@@ -17,6 +18,7 @@ export default class Laser extends objet {
     }
 
     move() {
-        this.y -= this.speed;
+        this.y += this.vy;
+        this.x += this.vx;
     }
 }

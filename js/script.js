@@ -3,6 +3,7 @@ import Laser from "./laser.js";
 import { defineListeners, inputStates } from "./ecouteurs.js";
 import Enemis from "./enemis.js";
 import Explosion from "./explosion.js";
+import Boss from "./boss.js";
 
 let canvas, ctx;
 let player;
@@ -11,6 +12,8 @@ let gameState = 'MENU';
 let lasers = [];
 let enemis = [];
 let explosions = [];
+let bossLasers = [];
+let boss = null;
 let lastShotTime = 0;
 let score = 0;
 let lvl = 0;
@@ -48,6 +51,8 @@ function startGame(level) {
     gameState = 'GAME';
     lasers = [];
     explosions = [];
+    bossLasers = [];
+    boss = null;
 
     document.querySelector('h1').style.display = 'none';
     document.querySelector('h3').style.display = 'none';
@@ -72,18 +77,18 @@ function startGame(level) {
     }
 
     if (level === 2) {
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 50; i++) {
             setTimeout(() => {
                 let x = Math.random() * canvas.width;
                 let y = -50;
                 enemis.push(new Enemis(x, y, "green", 80, 80, "small"));
             }, 400 * i);
         }
-        for (let i = 0; i < 7; i++) {
+        for (let i = 0; i < 30; i++) {
             setTimeout(() => {
                 let x = Math.random() * canvas.width;
                 let y = -50;
-                enemis.push(new Enemis(x, y, "green", 80, 80, "medium"));
+                enemis.push(new Enemis(x, y, "green", 90, 90, "medium"));
             }, 700 * i);
         }
     }
@@ -104,10 +109,10 @@ function startGame(level) {
             }, 700 * i);
         }
         setTimeout(() => {
-            let x = Math.random() * canvas.width;
-            let y = -50;
-            enemis.push(new Enemis(x, y, "green", 80, 80, "large"));
-        }, 10000);
+            let x = canvas.width / 2;
+            let y = -200;
+            boss = new Boss(x, y, "green", 500, 500);
+        }, 2500);
     }
 
 }
@@ -128,16 +133,16 @@ function mainLoop() {
 function updateGame() {
     if (player) {
         if (inputStates.left) {
-            player.x -= 5;
+            player.x -= 7;
         }
         if (inputStates.right) {
-            player.x += 5;
+            player.x += 7;
         }
         if (inputStates.up) {
-            player.y -= 5;
+            player.y -= 7;
         }
         if (inputStates.down) {
-            player.y += 5;
+            player.y += 7;
         }
 
         if (player.x < 0) player.x = 0;
@@ -205,6 +210,65 @@ function updateGame() {
             }
         }
 
+
+        if (boss) {
+            boss.move(canvas.width);
+            let lasers = boss.shoot();
+            if (lasers && lasers.length > 0) {
+                bossLasers.push(...lasers);
+            }
+
+            if (player.collide(boss)) {
+                player.life = 0;
+
+                updateScore();
+                explosions.push(new Explosion(player.x, player.y, "red"));
+                if (player.life <= 0) {
+                    setTimeout(() => {
+                        gameState = 'GAMEOVER';
+                        gameOver();
+                    }, 1000);
+                }
+                player.updateLife();
+            }
+
+            for (let j = lasers.length - 1; j >= 0; j--) {
+                if (lasers[j].collide(boss)) {
+                    explosions.push(new Explosion(boss.x, boss.y, "orange"));
+                    lasers.splice(j, 1);
+                    boss.life--;
+                    if (boss.life <= 0) {
+                        score += 2000;
+                        updateScore();
+                        explosions.push(new Explosion(boss.x, boss.y, "red"));
+                        boss = null;
+                    }
+                    break;
+                }
+            }
+        }
+
+        for (let i = bossLasers.length - 1; i >= 0; i--) {
+            let laser = bossLasers[i];
+            laser.move();
+            if (laser.y > canvas.height) {
+                bossLasers.splice(i, 1);
+                continue;
+            }
+            if (player.collide(laser)) {
+                player.life--;
+                player.updateLife();
+                bossLasers.splice(i, 1);
+                explosions.push(new Explosion(player.x, player.y, "red"));
+                if (player.life <= 0) {
+                    setTimeout(() => {
+                        gameState = 'GAMEOVER';
+                        gameOver();
+                    }, 1000);
+                }
+            }
+        }
+
         for (let i = explosions.length - 1; i >= 0; i--) {
             explosions[i].update();
             if (explosions[i].life <= 0) {
@@ -232,5 +296,7 @@ function drawGame() {
         lasers.forEach(laser => laser.draw(ctx));
         enemis.forEach(enemy => enemy.draw(ctx));
         explosions.forEach(explosion => explosion.draw(ctx));
+        if (boss) boss.draw(ctx);
+        bossLasers.forEach(laser => laser.draw(ctx));
     }
 }
