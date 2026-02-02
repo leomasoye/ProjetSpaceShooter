@@ -1,7 +1,7 @@
 export default class objet {
     x = 0;
     y = 0;
-    angle = 0; // Ajout d'un angle pour la rotation future
+    angle = 0;
     couleur = "black";
     largeur = 5;
     hauteur = 5;
@@ -29,13 +29,12 @@ export default class objet {
         ctx.restore();
     }
 
-    move(dx, dy) {
-        this.x += dx;
-        this.y += dy;
-    }
 
-    moveAbsolute(x, y) {
-        this.x = x;
-        this.y = y;
+
+    collide(other) {
+        if (Math.abs(this.x - other.x) < (this.largeur + other.largeur) / 2 && Math.abs(this.y - other.y) < (this.hauteur + other.hauteur) / 2) {
+            return true;
+        }
+        return false;
     }
 }

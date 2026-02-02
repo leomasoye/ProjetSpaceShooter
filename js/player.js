@@ -6,6 +6,12 @@ export default class Player extends objet {
         super(x, y, couleur, largeur, hauteur);
         this.image = new Image();
         this.image.src = "assets/images/player.png";
+        this.life = 3;
+        this.updateLife();
+    }
+
+    updateLife() {
+        document.getElementById("life").innerText = this.life;
     }
 
     draw(ctx) {
