@@ -1,7 +1,7 @@
 let inputStates = {};
 
 function defineListeners() {
-    
+
     document.onkeydown = (event) => {
 
         if (event.key === "ArrowLeft") {
@@ -13,6 +13,9 @@ function defineListeners() {
         } else if (event.key === "ArrowDown") {
             inputStates.down = true;
         } else if (event.key === " ") {
+            inputStates.space = true;
+        }
+        else if (event.key === "Space") {
             inputStates.space = true;
         }
     };
@@ -28,6 +31,9 @@ function defineListeners() {
         } else if (event.key === "ArrowDown") {
             inputStates.down = false;
         } else if (event.key === " ") {
+            inputStates.space = false;
+        }
+        else if (event.key === "Space") {
             inputStates.space = false;
         }
     };
