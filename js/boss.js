@@ -9,7 +9,8 @@ export default class boss extends objet {
         this.dx = 1;
         this.image = new Image();
         this.image.src = "assets/images/boss.png";
-        this.life = 100;
+        this.life = 30;
+        this.maxLife = 30;
         this.lastShot = 0;
     }
 
@@ -27,7 +28,7 @@ export default class boss extends objet {
     }
 
     move(canvasWidth) {
-        if (this.y < 100) {
+        if (this.y < 300) {
             this.y += this.speed;
         } else {
             this.x += this.dx;
@@ -37,9 +38,25 @@ export default class boss extends objet {
         }
     }
 
+    lifeBar(ctx) {
+        ctx.save();
+        ctx.fillStyle = "red";
+        ctx.fillRect(this.x - this.largeur / 2, this.y - this.hauteur / 2 - 20, this.largeur, 10);
+
+        ctx.fillStyle = "green";
+        let ratio = this.life / this.maxLife;
+        if (ratio < 0) ratio = 0;
+        ctx.fillRect(this.x - this.largeur / 2, this.y - this.hauteur / 2 - 20, this.largeur * ratio, 10);
+
+        ctx.strokeStyle = "white";
+        ctx.strokeRect(this.x - this.largeur / 2, this.y - this.hauteur / 2 - 20, this.largeur, 10);
+
+        ctx.restore();
+    }
+
     shoot() {
         let now = Date.now();
-        if (now - this.lastShot > 1000) {
+        if (now - this.lastShot > 2000) {
             this.lastShot = now;
             return [
                 new Laser(this.x, this.y + this.hauteur / 2, 1, 0, "red"),

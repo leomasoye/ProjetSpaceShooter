@@ -20,10 +20,12 @@ let lvl = 0;
 
 function updateScore() {
     document.getElementById("score").innerText = score;
+    localStorage.setItem('score', score);
 }
 
 function updateLevel() {
     document.getElementById("level").innerText = level;
+    localStorage.setItem('level', level);
 }
 
 window.onload = init;
@@ -38,12 +40,27 @@ function init() {
     defineListeners();
 
     const buttons = document.querySelectorAll('.button-container button');
-    buttons[0].onclick = () => startGame(1);
-    buttons[1].onclick = () => startGame(2);
-    buttons[2].onclick = () => startGame(3);
+
+    document.getElementById('returnBtn').onclick = () => {
+        gameState = 'MENU';
+        location.reload();
+    };
+
+    let levelsUnlocked = localStorage.getItem('levelsUnlocked') ? parseInt(localStorage.getItem('levelsUnlocked')) : 1;
+
+    buttons.forEach((btn, index) => {
+        if (index + 1 > levelsUnlocked && index < 3) {
+            btn.style.opacity = '0.5';
+            btn.onclick = () => alert("Niveau verrouillé ! Terminez le niveau précédent d'abord.");
+        } else if (index < 3) {
+            btn.onclick = () => startGame(index + 1);
+        }
+    });
 
     mainLoop();
 }
+
+let spawningFinished = false;
 
 function startGame(level) {
     lvl = level;
@@ -53,11 +70,15 @@ function startGame(level) {
     explosions = [];
     bossLasers = [];
     boss = null;
+    spawningFinished = false;
 
     document.querySelector('h1').style.display = 'none';
     document.querySelector('h3').style.display = 'none';
     document.querySelector('.button-container').style.display = 'none';
     document.querySelector('img').style.display = 'none';
+
+    document.getElementById('victoryScreen').style.display = 'none';
+    document.getElementById('defeatScreen').style.display = 'none';
 
     document.getElementById('gameInfos').style.display = 'block';
     document.getElementById('level').innerText = level;
@@ -67,18 +88,23 @@ function startGame(level) {
     player = new Player(canvas.width / 2, canvas.height - 100, "red", 130, 130);
 
     if (level === 1) {
+        let maxTime = 15000;
         for (let i = 0; i < 15; i++) {
             setTimeout(() => {
+                if (gameState !== 'GAME') return;
                 let x = Math.random() * canvas.width;
                 let y = -50;
                 enemis.push(new Enemis(x, y, "green", 80, 80, "small"));
             }, 1000 * i);
         }
+        setTimeout(() => { if (gameState === 'GAME') spawningFinished = true; }, maxTime + 2000);
     }
 
     if (level === 2) {
+        let maxTime = 21000;
         for (let i = 0; i < 50; i++) {
             setTimeout(() => {
+                if (gameState !== 'GAME') return;
                 let x = Math.random() * canvas.width;
                 let y = -50;
                 enemis.push(new Enemis(x, y, "green", 80, 80, "small"));
@@ -86,16 +112,19 @@ function startGame(level) {
         }
         for (let i = 0; i < 30; i++) {
             setTimeout(() => {
+                if (gameState !== 'GAME') return;
                 let x = Math.random() * canvas.width;
                 let y = -50;
-                enemis.push(new Enemis(x, y, "green", 90, 90, "medium"));
+                enemis.push(new Enemis(x, y, "green", 100, 100, "medium"));
             }, 700 * i);
         }
+        setTimeout(() => { if (gameState === 'GAME') spawningFinished = true; }, maxTime + 2000);
     }
 
     if (level === 3) {
         for (let i = 0; i < 50; i++) {
             setTimeout(() => {
+                if (gameState !== 'GAME') return;
                 let x = Math.random() * canvas.width;
                 let y = -50;
                 enemis.push(new Enemis(x, y, "green", 80, 80, "small"));
@@ -103,15 +132,18 @@ function startGame(level) {
         }
         for (let i = 0; i < 10; i++) {
             setTimeout(() => {
+                if (gameState !== 'GAME') return;
                 let x = Math.random() * canvas.width;
                 let y = -50;
-                enemis.push(new Enemis(x, y, "green", 80, 80, "medium"));
+                enemis.push(new Enemis(x, y, "green", 100, 100, "medium"));
             }, 700 * i);
         }
         setTimeout(() => {
-            let x = canvas.width / 2;
-            let y = -200;
-            boss = new Boss(x, y, "green", 500, 500);
+            if (gameState === 'GAME') {
+                let x = canvas.width / 2;
+                let y = -200;
+                boss = new Boss(x, y, "green", 500, 500);
+            }
         }, 2500);
     }
 
@@ -119,30 +151,20 @@ function startGame(level) {
 
 
 
-function mainLoop() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    if (gameState === 'GAME') {
-        updateGame();
-        drawGame();
-    }
-
-    requestId = requestAnimationFrame(mainLoop);
-}
 
 function updateGame() {
     if (player) {
         if (inputStates.left) {
-            player.x -= 7;
+            player.x -= 9;
         }
         if (inputStates.right) {
-            player.x += 7;
+            player.x += 9;
         }
         if (inputStates.up) {
-            player.y -= 7;
+            player.y -= 9;
         }
         if (inputStates.down) {
-            player.y += 7;
+            player.y += 9;
         }
 
         if (player.x < 0) player.x = 0;
@@ -241,7 +263,11 @@ function updateGame() {
                         score += 2000;
                         updateScore();
                         explosions.push(new Explosion(boss.x, boss.y, "red"));
-                        boss = null;
+                        setTimeout(() => {
+                            boss = null;
+                            gameState = 'WIN';
+                            win();
+                        }, 1000);
                     }
                     break;
                 }
@@ -276,17 +302,54 @@ function updateGame() {
             }
         }
 
+        if ((lvl === 1 || lvl === 2) && spawningFinished && enemis.length === 0) {
+            gameState = 'WIN';
+            win();
+        }
+
     }
+}
+
+function mainLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (gameState === 'GAME') {
+        updateGame();
+        drawGame();
+    }
+
+    requestId = requestAnimationFrame(mainLoop);
 }
 
 function gameOver() {
     if (gameState === 'GAMEOVER') {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "black";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "white";
-        ctx.font = "50px Arial";
-        ctx.fillText("Game Over", canvas.width / 2 - 100, canvas.height / 2);
+        document.getElementById('defeatScreen').style.display = 'flex';
+    }
+}
+
+function win() {
+    if (gameState === 'WIN') {
+        document.getElementById('victoryScreen').style.display = 'flex';
+        document.getElementById('finalScore').innerText = score;
+
+        let key = 'scoreLevel' + lvl;
+        let currentBest = localStorage.getItem(key) ? parseInt(localStorage.getItem(key)) : 0;
+        if (score > currentBest) {
+            localStorage.setItem(key, score);
+        }
+
+        let currentUnlocked = localStorage.getItem('levelsUnlocked') ? parseInt(localStorage.getItem('levelsUnlocked')) : 1;
+        if (lvl >= currentUnlocked) {
+            localStorage.setItem('levelsUnlocked', lvl + 1);
+        }
+
+        const nextBtn = document.getElementById('nextLevelBtn');
+        if (lvl < 3) {
+            nextBtn.style.display = 'block';
+            nextBtn.onclick = () => startGame(lvl + 1);
+        } else {
+            nextBtn.style.display = 'none';
+        }
     }
 }
 
@@ -295,8 +358,10 @@ function drawGame() {
         if (player.life > 0) player.draw(ctx);
         lasers.forEach(laser => laser.draw(ctx));
         enemis.forEach(enemy => enemy.draw(ctx));
-        explosions.forEach(explosion => explosion.draw(ctx));
-        if (boss) boss.draw(ctx);
+
+        if (boss) { boss.draw(ctx); boss.lifeBar(ctx); }
         bossLasers.forEach(laser => laser.draw(ctx));
+
+        explosions.forEach(explosion => explosion.draw(ctx));
     }
 }

@@ -27,6 +27,11 @@
             <a href="index.html"><button>Retour</button></a>
         </div>
     </main>
+    <script>
+        document.getElementById('score1').innerText = localStorage.getItem('scoreLevel1') || 0;
+        document.getElementById('score2').innerText = localStorage.getItem('scoreLevel2') || 0;
+        document.getElementById('score3').innerText = localStorage.getItem('scoreLevel3') || 0;
+    </script>
 </body>
 
 </html>

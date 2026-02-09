@@ -24,8 +24,27 @@
             <p>Score : <span id="score"></span></p>
             <p>Life : <span id="life"></span></p>
             <p>Level : <span id="level"></span></p>
+            <button id="returnBtn" class="game-btn">Retour Menu</button>
         </div>
     </main>
+    <div id="victoryScreen">
+        <h1>Victoire !</h1>
+        <p>Niveau terminé avec succès.</p>
+        <p>Score: <span id="finalScore"></span></p>
+        <div class="button-container">
+            <button id="nextLevelBtn">Niveau Suivant</button>
+            <button onclick="location.reload()">Menu Principal</button>
+        </div>
+    </div>
+
+    <div id="defeatScreen">
+        <h1>Game Over</h1>
+        <p>Vous avez été détruit.</p>
+        <div class="button-container">
+            <button onclick="location.reload()">Menu Principal</button>
+        </div>
+    </div>
+
     <script type="module" src="js/script.js"></script>
 </body>
 
