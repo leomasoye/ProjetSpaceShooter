@@ -18,37 +18,48 @@ let lastShotTime = 0;
 let score = 0;
 let lvl = 0;
 
+
+/* Fonctions qui permettent de mettre a jour le score et le niveau dans le localStorage et l'affichage utilisateur */
 function updateScore() {
     document.getElementById("score").innerText = score;
     localStorage.setItem('score', score);
 }
 
 function updateLevel() {
-    document.getElementById("level").innerText = level;
-    localStorage.setItem('level', level);
+    document.getElementById("level").innerText = lvl;
+    localStorage.setItem('level', lvl);
 }
 
+/* On charge le jeu */
 window.onload = init;
 
 function init() {
+    //On défini ce qui est necessaire
     canvas = document.getElementById("gameCanvas");
     ctx = canvas.getContext("2d");
 
+    //Ensuite la taille du canvas
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
+    //On écoute les evenements défini dans ecouteurs.js
     defineListeners();
 
+    //On récupere les boutons
     const buttons = document.querySelectorAll('.button-container button');
 
+    //On définit ce qui se passe quand on clique sur le bouton retour
     document.getElementById('returnBtn').onclick = () => {
         gameState = 'MENU';
         location.reload();
     };
 
+    //On récupere le nombre de niveaux verrouillés
     let levelsUnlocked = localStorage.getItem('levelsUnlocked') ? parseInt(localStorage.getItem('levelsUnlocked')) : 1;
 
+    //On parcourt les boutons
     buttons.forEach((btn, index) => {
+        //Si le niveau est verrouillé on le signal a l'user
         if (index + 1 > levelsUnlocked && index < 3) {
             btn.style.opacity = '0.5';
             btn.onclick = () => alert("Niveau verrouillé ! Terminez le niveau précédent d'abord.");
@@ -57,12 +68,15 @@ function init() {
         }
     });
 
+    //On lance la boucle principale de jeu
     mainLoop();
 }
 
+/* Fonction qui permet de lancer le jeu */
 let spawningFinished = false;
 
 function startGame(level) {
+    //On définit tous les trucs necessaires pour la suite (niveau, on initialise les laser avec des listes, etc)
     lvl = level;
     updateLevel();
     gameState = 'GAME';
@@ -72,6 +86,7 @@ function startGame(level) {
     boss = null;
     spawningFinished = false;
 
+    //On cache les éléments du menu, les scores et les autres écrans quand on lance le jeu (logique)
     document.querySelector('h1').style.display = 'none';
     document.querySelector('h3').style.display = 'none';
     document.querySelector('.button-container').style.display = 'none';
@@ -80,24 +95,26 @@ function startGame(level) {
     document.getElementById('victoryScreen').style.display = 'none';
     document.getElementById('defeatScreen').style.display = 'none';
 
-    document.getElementById('gameInfos').style.display = 'block';
+    document.getElementById('gameInfos').style.display = 'flex';
     document.getElementById('level').innerText = level;
 
     canvas.style.display = 'block';
 
+    //On crée le joueur
     player = new Player(canvas.width / 2, canvas.height - 100, "red", 130, 130);
 
+    /* Ici, suivant le niveau, on adapte les enemis (temps de spawn, différents enemis et boss pour le dernier niveau) On notera que le boss n'est pas un enemis comme les autres, il possède sa propre classe car il a plein de particularités */
     if (level === 1) {
         let maxTime = 15000;
-        for (let i = 0; i < 15; i++) {
+        for (let i = 0; i < 30; i++) {
             setTimeout(() => {
                 if (gameState !== 'GAME') return;
                 let x = Math.random() * canvas.width;
                 let y = -50;
                 enemis.push(new Enemis(x, y, "green", 80, 80, "small"));
-            }, 1000 * i);
+            }, 800 * i);
         }
-        setTimeout(() => { if (gameState === 'GAME') spawningFinished = true; }, maxTime + 2000);
+        setTimeout(() => { if (gameState === 'GAME') spawningFinished = true; }, maxTime + 800);
     }
 
     if (level === 2) {
@@ -144,15 +161,16 @@ function startGame(level) {
                 let y = -200;
                 boss = new Boss(x, y, "green", 500, 500);
             }
-        }, 2500);
+        }, 2500); // Pas de fin de game ici puisque elle est définie en fonction du boss et pas des spawns
     }
 
 }
 
 
 
-
+/* Fonction qui permet de mettre à jour le jeu, elle gère par ex les déplacements du joueur et les lasers, les collisions, etc */
 function updateGame() {
+    // deplacement du joueur
     if (player) {
         if (inputStates.left) {
             player.x -= 9;
@@ -172,6 +190,7 @@ function updateGame() {
         if (player.y < 0) player.y = 0;
         if (player.y > canvas.height - player.hauteur) player.y = canvas.height - player.hauteur;
         if (inputStates.space) {
+            // gestion du tir (latence implémentée pour éviter de tirer non stop)
             let currentTime = Date.now();
             if (currentTime - lastShotTime > 500) {
                 lasers.push(new Laser(player.x, player.y - player.hauteur / 2));
@@ -179,6 +198,7 @@ function updateGame() {
             }
         }
 
+        // deplacement des lasers
         for (let i = lasers.length - 1; i >= 0; i--) {
             lasers[i].move();
             if (lasers[i].y < 0) {
@@ -186,6 +206,7 @@ function updateGame() {
             }
         }
 
+        // gestion de toutes les collisions
         for (let i = enemis.length - 1; i >= 0; i--) {
             let enemy = enemis[i];
             enemy.move();
@@ -233,11 +254,12 @@ function updateGame() {
         }
 
 
-        if (boss) {
+        //Gestion du boss, de sa mort, ses lasers etc
+        if (boss && boss.life > 0) {
             boss.move(canvas.width);
-            let lasers = boss.shoot();
-            if (lasers && lasers.length > 0) {
-                bossLasers.push(...lasers);
+            let newLasers = boss.shoot();
+            if (newLasers && newLasers.length > 0) {
+                bossLasers.push(...newLasers);
             }
 
             if (player.collide(boss)) {
@@ -263,6 +285,7 @@ function updateGame() {
                         score += 2000;
                         updateScore();
                         explosions.push(new Explosion(boss.x, boss.y, "red"));
+
                         setTimeout(() => {
                             boss = null;
                             gameState = 'WIN';
@@ -310,6 +333,7 @@ function updateGame() {
     }
 }
 
+// Fonction principale qui permet de mettre à jour et de dessiner le jeu grace a canva
 function mainLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -321,9 +345,12 @@ function mainLoop() {
     requestId = requestAnimationFrame(mainLoop);
 }
 
+
+/* Fonctions de victoires et de défaites, elles permettent de mettre à jour l'interface utilisateur et de stocker le score. On stocke les scores seulement quand c'est gagné, evidemment */
 function gameOver() {
     if (gameState === 'GAMEOVER') {
         document.getElementById('defeatScreen').style.display = 'flex';
+        document.getElementById('finalScoreDefeat').innerText = score;
     }
 }
 
@@ -353,13 +380,14 @@ function win() {
     }
 }
 
+/* Fonction de dessin du jeu, elle permet de dessiner le joueur, les lasers, les ennemis, le boss et les explosions */
 function drawGame() {
     if (player) {
         if (player.life > 0) player.draw(ctx);
         lasers.forEach(laser => laser.draw(ctx));
         enemis.forEach(enemy => enemy.draw(ctx));
 
-        if (boss) { boss.draw(ctx); boss.lifeBar(ctx); }
+        if (boss && boss.life > 0) { boss.draw(ctx); boss.lifeBar(ctx); }
         bossLasers.forEach(laser => laser.draw(ctx));
 
         explosions.forEach(explosion => explosion.draw(ctx));

@@ -40,28 +40,39 @@ export default class boss extends objet {
 
     lifeBar(ctx) {
         ctx.save();
-        ctx.fillStyle = "red";
-        ctx.fillRect(this.x - this.largeur / 2, this.y - this.hauteur / 2 - 20, this.largeur, 10);
 
-        ctx.fillStyle = "green";
+        let screenWidth = ctx.canvas.width;
+        let barWidth = screenWidth * 0.6;
+        let barHeight = 20;
+        let x = (screenWidth - barWidth) / 2;
+        let y = 30;
+
+        ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
+        ctx.fillRect(x, y, barWidth, barHeight);
         let ratio = this.life / this.maxLife;
         if (ratio < 0) ratio = 0;
-        ctx.fillRect(this.x - this.largeur / 2, this.y - this.hauteur / 2 - 20, this.largeur * ratio, 10);
-
+        ctx.fillStyle = "rgba(0, 255, 0, 0.8)";
+        ctx.fillRect(x, y, barWidth * ratio, barHeight);
+        ctx.lineWidth = 2;
         ctx.strokeStyle = "white";
-        ctx.strokeRect(this.x - this.largeur / 2, this.y - this.hauteur / 2 - 20, this.largeur, 10);
+        ctx.strokeRect(x, y, barWidth, barHeight);
+        ctx.fillStyle = "white";
+        ctx.font = "bold 16px Arial";
+        ctx.fillText("BOSS", x + 5, y + 16);
 
         ctx.restore();
     }
 
     shoot() {
         let now = Date.now();
-        if (now - this.lastShot > 2000) {
+        if (now - this.lastShot > 1500) {
             this.lastShot = now;
             return [
-                new Laser(this.x, this.y + this.hauteur / 2, 1, 0, "red"),
-                new Laser(this.x, this.y + this.hauteur / 2, 1, 2, "red"),
-                new Laser(this.x, this.y + this.hauteur / 2, 1, -2, "red")
+                new Laser(this.x, this.y + this.hauteur / 2, 5, 0, "red"),
+                new Laser(this.x, this.y + this.hauteur / 2, 4, 2, "red"),
+                new Laser(this.x, this.y + this.hauteur / 2, 4, -2, "red"),
+                new Laser(this.x, this.y + this.hauteur / 2, 3, 4, "red"),
+                new Laser(this.x, this.y + this.hauteur / 2, 3, -4, "red")
             ];
         }
         return [];

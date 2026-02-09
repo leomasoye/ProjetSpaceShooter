@@ -11,7 +11,14 @@ export default class Player extends objet {
     }
 
     updateLife() {
-        document.getElementById("life").innerText = this.life;
+        const lifeContainer = document.getElementById("life");
+        lifeContainer.innerHTML = "";
+        for (let i = 0; i < this.life; i++) {
+            let heart = document.createElement("span");
+            heart.className = "heart";
+            heart.innerHTML = "❤"; // Unicode Heart
+            lifeContainer.appendChild(heart);
+        }
     }
 
     draw(ctx) {
