@@ -11,14 +11,17 @@
 
 <body>
     <main>
-        <img src="/assets/images/iconeSpaceShooter.png" alt="Icone du jeu">
-        <h1>Bienvenue dans le jeu !</h1>
-        <h3>Choisissez une action : </h3>
-        <div class="button-container">
-            <button>Niveau 1</button>
-            <button>Niveau 2</button>
-            <button>Niveau 3</button>
-            <a href="scores.html"><button>Meilleurs scores</button></a>
+        <div class="glass-container">
+            <img src="/assets/images/iconeSpaceShooter.png" alt="Icone du jeu">
+            <h1>Bienvenue dans le jeu !</h1>
+            <h3>Choisissez une action : </h3>
+            <div class="button-container">
+                <button>Niveau 1</button>
+                <button>Niveau 2</button>
+                <button>Niveau 3</button>
+                <a href="scores.html"><button>Meilleurs scores</button></a>
+                <a href="rules.html"><button>Règles du jeu</button></a>
+            </div>
         </div>
         <canvas id="gameCanvas"></canvas>
         <div id="gameInfos">
@@ -29,6 +32,12 @@
             <div class="hud-item hud-center">
                 <span class="hud-label">SCORE</span>
                 <span id="score" class="hud-value">0</span>
+            </div>
+            <div class="hud-item hud-center">
+                <span class="hud-label">BONUS</span>
+                <div id="bonus-bar-container">
+                    <div id="bonus-bar-fill"></div>
+                </div>
             </div>
             <div class="hud-item hud-life-container">
                 <div id="life" class="hud-life"></div>

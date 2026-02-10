@@ -1,8 +1,8 @@
 import objet from "./objet.js";
 
 export default class Laser extends objet {
-    constructor(x, y, vy = -10, vx = 0, color = "cyan") {
-        super(x, y, color, 5, 15);
+    constructor(x, y, vy = -10, vx = 0, color = "cyan", width = 5, height = 15) {
+        super(x, y, color, width, height);
         this.vy = vy;
         this.vx = vx;
     }

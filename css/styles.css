@@ -29,7 +29,7 @@ body {
 #gameInfos {
     display: none;
     position: fixed;
-    top: 1000px;
+    top: 10px;
     right: auto;
     left: 10px;
     width: auto;
@@ -46,6 +46,101 @@ body {
     box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
 }
 
+
+/* Main container for centered content */
+.glass-container {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+    text-align: center;
+    max-width: 800px;
+    width: 90%;
+}
+
+.key {
+    display: inline-block;
+    padding: 5px 10px;
+    margin: 5px;
+    border: 1px solid #00ffff;
+    border-radius: 5px;
+    background: rgba(0, 255, 255, 0.1);
+    color: #00ffff;
+    font-size: 1.2rem;
+    font-weight: bold;
+    min-width: 30px;
+}
+
+.key.wide {
+    padding: 5px 20px;
+}
+
+.rules-section {
+    margin-bottom: 30px;
+}
+
+.control-grid,
+.bonus-grid {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+.control-item {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.bonus-card {
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 15px;
+    width: 250px;
+    text-align: center;
+}
+
+.bonus-card.charge {
+    border-color: yellow;
+    box-shadow: 0 0 10px rgba(255, 255, 0, 0.3);
+}
+
+.bonus-card.shield {
+    border-color: #00ff00;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+.bonus-icon {
+    width: 50px;
+    height: 50px;
+    margin: 0 auto 10px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: white;
+}
+
+.bonus-card.charge .bonus-icon {
+    background: blue;
+    box-shadow: 0 0 10px cyan;
+    border: 2px solid cyan;
+}
+
+.bonus-card.shield .bonus-icon {
+    background: rgba(0, 255, 0, 0.3);
+    box-shadow: 0 0 10px #00ff00;
+    border: 2px solid #00ff00;
+}
+
 .hud-item {
     display: flex;
     flex-direction: column;
@@ -54,28 +149,6 @@ body {
     text-shadow: 0 0 5px #00ffff;
 }
 
-.hud-center {
-    position: static;
-    transform: none;
-    left: auto;
-}
-
-.hud-label {
-    font-size: 0.7rem;
-    letter-spacing: 2px;
-    opacity: 0.8;
-    margin-bottom: 2px;
-    color: #aaaaff;
-}
-
-.hud-value {
-    font-size: 1.5rem;
-    font-weight: bold;
-}
-
-.hud-life-container {
-    align-items: flex-end;
-}
 
 .hud-life {
     font-size: 1.5rem;
@@ -156,6 +229,24 @@ h1 {
 .hud-value,
 .hud-label {
     font-family: 'Orbitron', monospace;
+}
+
+#bonus-bar-container {
+    width: 200px;
+    height: 10px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid #00ffff;
+    border-radius: 5px;
+    margin-top: 5px;
+    overflow: hidden;
+}
+
+#bonus-bar-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #ffcc00, #ffaa00);
+    box-shadow: 0 0 10px #ffcc00;
+    transition: width 0.3s ease-out;
 }
 
 img {
@@ -251,10 +342,29 @@ input[type="button"]:hover {
     align-items: center;
 }
 
-#scores1 p,
-#scores2 p,
-#scores3 p {
-    margin: 0;
-    color: #fff;
+
+.hud-center {
+    position: static;
+    transform: none;
+    left: auto;
+}
+
+.hud-label {
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    opacity: 0.8;
+    margin-bottom: 2px;
+    color: #aaaaff;
+    font-family: 'Orbitron', monospace;
+    display: block;
+}
+
+.hud-value {
+    font-size: 1.5rem;
     font-weight: bold;
+    font-family: 'Orbitron', monospace;
+}
+
+.hud-life-container {
+    align-items: flex-end;
 }

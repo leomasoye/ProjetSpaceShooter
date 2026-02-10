@@ -4,6 +4,7 @@ import { defineListeners, inputStates } from "./ecouteurs.js";
 import Enemis from "./enemis.js";
 import Explosion from "./explosion.js";
 import Boss from "./boss.js";
+import Bonus from "./bonus.js";
 
 let canvas, ctx;
 let player;
@@ -17,6 +18,42 @@ let boss = null;
 let lastShotTime = 0;
 let score = 0;
 let lvl = 0;
+let bonuses = [];
+let bonusCharge = 0;
+const MAX_BONUS_CHARGE = 3;
+let isFiringBeam = false;
+let stars = [];
+
+function initStars() {
+    stars = [];
+    for (let i = 0; i < 100; i++) {
+        stars.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 2,
+            speed: Math.random() * 3 + 1
+        });
+    }
+}
+
+function updateStars() {
+    stars.forEach(star => {
+        star.y += star.speed;
+        if (star.y > canvas.height) {
+            star.y = 0;
+            star.x = Math.random() * canvas.width;
+        }
+    });
+}
+
+function drawStars(ctx) {
+    ctx.fillStyle = "white";
+    stars.forEach(star => {
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fill();
+    });
+}
 
 
 /* Fonctions qui permettent de mettre a jour le score et le niveau dans le localStorage et l'affichage utilisateur */
@@ -26,8 +63,21 @@ function updateScore() {
 }
 
 function updateLevel() {
-    document.getElementById("level").innerText = lvl;
     localStorage.setItem('level', lvl);
+}
+
+function updateBonusUI() {
+    let percentage = (bonusCharge / MAX_BONUS_CHARGE) * 100;
+    if (percentage > 100) percentage = 100;
+    document.getElementById("bonus-bar-fill").style.width = percentage + "%";
+
+    if (bonusCharge >= MAX_BONUS_CHARGE) {
+        document.getElementById("bonus-bar-fill").style.boxShadow = "0 0 20px red";
+        document.getElementById("bonus-bar-fill").style.background = "linear-gradient(90deg, #ff0000, #ff5500)";
+    } else {
+        document.getElementById("bonus-bar-fill").style.boxShadow = "0 0 10px #ffcc00";
+        document.getElementById("bonus-bar-fill").style.background = "linear-gradient(90deg, #ffcc00, #ffaa00)";
+    }
 }
 
 /* On charge le jeu */
@@ -81,16 +131,18 @@ function startGame(level) {
     updateLevel();
     gameState = 'GAME';
     lasers = [];
-    explosions = [];
     bossLasers = [];
     boss = null;
     spawningFinished = false;
+    bonuses = [];
+    bonusCharge = 0;
+    updateBonusUI();
+
+    stars = [];
+    initStars();
 
     //On cache les éléments du menu, les scores et les autres écrans quand on lance le jeu (logique)
-    document.querySelector('h1').style.display = 'none';
-    document.querySelector('h3').style.display = 'none';
-    document.querySelector('.button-container').style.display = 'none';
-    document.querySelector('img').style.display = 'none';
+    document.querySelector('.glass-container').style.display = 'none';
 
     document.getElementById('victoryScreen').style.display = 'none';
     document.getElementById('defeatScreen').style.display = 'none';
@@ -105,37 +157,37 @@ function startGame(level) {
 
     /* Ici, suivant le niveau, on adapte les enemis (temps de spawn, différents enemis et boss pour le dernier niveau) On notera que le boss n'est pas un enemis comme les autres, il possède sa propre classe car il a plein de particularités */
     if (level === 1) {
-        let maxTime = 15000;
-        for (let i = 0; i < 30; i++) {
-            setTimeout(() => {
-                if (gameState !== 'GAME') return;
-                let x = Math.random() * canvas.width;
-                let y = -50;
-                enemis.push(new Enemis(x, y, "green", 80, 80, "small"));
-            }, 800 * i);
-        }
-        setTimeout(() => { if (gameState === 'GAME') spawningFinished = true; }, maxTime + 800);
-    }
-
-    if (level === 2) {
-        let maxTime = 21000;
+        let maxTime = 25000;
         for (let i = 0; i < 50; i++) {
             setTimeout(() => {
                 if (gameState !== 'GAME') return;
                 let x = Math.random() * canvas.width;
                 let y = -50;
                 enemis.push(new Enemis(x, y, "green", 80, 80, "small"));
-            }, 400 * i);
+            }, 500 * i);
         }
-        for (let i = 0; i < 30; i++) {
+        setTimeout(() => { if (gameState === 'GAME') spawningFinished = true; }, maxTime + 800);
+    }
+
+    if (level === 2) {
+        let maxTime = 24000;
+        for (let i = 0; i < 80; i++) {
+            setTimeout(() => {
+                if (gameState !== 'GAME') return;
+                let x = Math.random() * canvas.width;
+                let y = -50;
+                enemis.push(new Enemis(x, y, "green", 80, 80, "small"));
+            }, 300 * i);
+        }
+        for (let i = 0; i < 40; i++) {
             setTimeout(() => {
                 if (gameState !== 'GAME') return;
                 let x = Math.random() * canvas.width;
                 let y = -50;
                 enemis.push(new Enemis(x, y, "green", 100, 100, "medium"));
-            }, 700 * i);
+            }, 600 * i);
         }
-        setTimeout(() => { if (gameState === 'GAME') spawningFinished = true; }, maxTime + 2000);
+        setTimeout(() => { if (gameState === 'GAME') spawningFinished = true; }, maxTime + 1000);
     }
 
     if (level === 3) {
@@ -170,31 +222,90 @@ function startGame(level) {
 
 /* Fonction qui permet de mettre à jour le jeu, elle gère par ex les déplacements du joueur et les lasers, les collisions, etc */
 function updateGame() {
+    updateStars();
     // deplacement du joueur
     if (player) {
         if (inputStates.left) {
-            player.x -= 9;
+            player.x -= 6;
         }
         if (inputStates.right) {
-            player.x += 9;
+            player.x += 6;
         }
         if (inputStates.up) {
-            player.y -= 9;
+            player.y -= 6;
         }
         if (inputStates.down) {
-            player.y += 9;
+            player.y += 6;
         }
 
         if (player.x < 0) player.x = 0;
         if (player.x > canvas.width - player.largeur) player.x = canvas.width - player.largeur;
         if (player.y < 0) player.y = 0;
         if (player.y > canvas.height - player.hauteur) player.y = canvas.height - player.hauteur;
+        if (bonusCharge >= MAX_BONUS_CHARGE) {
+            player.bonusActive = true;
+        }
+
+        if (player.bonusActive) {
+            // Decay du bonus (dure environ 5 secondes)
+            bonusCharge -= 0.01;
+            updateBonusUI();
+            if (bonusCharge <= 0) {
+                bonusCharge = 0;
+                player.bonusActive = false;
+                updateBonusUI();
+            }
+        }
+
+        isFiringBeam = false;
         if (inputStates.space) {
-            // gestion du tir (latence implémentée pour éviter de tirer non stop)
-            let currentTime = Date.now();
-            if (currentTime - lastShotTime > 500) {
-                lasers.push(new Laser(player.x, player.y - player.hauteur / 2));
-                lastShotTime = currentTime;
+            if (player.bonusActive) {
+                isFiringBeam = true;
+            } else {
+                // gestion du tir normal (latence implémentée pour éviter de tirer non stop)
+                let currentTime = Date.now();
+                if (currentTime - lastShotTime > 500) {
+                    lasers.push(new Laser(player.x, player.y - player.hauteur / 2));
+                    lastShotTime = currentTime;
+                }
+            }
+        }
+
+        // Gestion des bonus
+        // Spawn aléatoire de bonus (faible probabilité pour charge, très faible pour shield)
+        if (Math.random() < 0.003) {
+            let x = Math.random() * (canvas.width - 30);
+            let type = Math.random() < 0.2 ? "shield" : "charge"; // 20% chance d'avoir un bouclier
+            bonuses.push(new Bonus(x, -30, "yellow", 30, 30, type));
+        }
+
+        if (player.shieldActive && Date.now() > player.shieldEndTime) {
+            player.shieldActive = false;
+        }
+
+        for (let i = bonuses.length - 1; i >= 0; i--) {
+            bonuses[i].move();
+            if (bonuses[i].y > canvas.height) {
+                bonuses.splice(i, 1);
+                continue;
+            }
+            if (player.collide(bonuses[i])) {
+
+                if (bonuses[i].type === "shield") {
+                    player.shieldActive = true;
+                    player.shieldEndTime = Date.now() + 3000;
+                } else {
+                    // C'est un bonus de charge
+                    score += 500;
+                    if (bonusCharge >= MAX_BONUS_CHARGE) {
+                        bonusCharge--; // On en enlève un si on est pleins
+                    } else {
+                        bonusCharge++;
+                    }
+                    updateScore();
+                    updateBonusUI();
+                }
+                bonuses.splice(i, 1);
             }
         }
 
@@ -214,7 +325,40 @@ function updateGame() {
                 enemis.splice(i, 1);
                 continue;
             }
+
+            // Collision avec le Laser Continu (Beam)
+            if (isFiringBeam) {
+                // Vérification collision rectangulaire simple
+                // Le rayon fait ~50px de large et va du joueur jusqu'en haut
+                // Beam X center = player.x, Width = 50
+                // Enemy X center = enemy.x, Width = enemy.largeur
+                if (Math.abs(player.x - enemy.x) < (50 + enemy.largeur) / 2 &&
+                    enemy.y < player.y + enemy.hauteur / 2) {
+
+                    // Destruction immédiate ou gros dégâts
+                    explosions.push(new Explosion(enemy.x, enemy.y, "yellow")); // Explosion spéciale
+                    score += (enemy.type === "small" ? 100 : 300);
+                    enemis.splice(i, 1);
+                    updateScore();
+                    continue; // Ennemi détruit, on passe au suivant
+                }
+            }
+
             if (player.collide(enemy)) {
+                if (player.shieldActive) {
+                    // Bouclier actif : on détruit l'ennemi sans prendre de dégats et on gagne du score
+                    explosions.push(new Explosion(enemy.x, enemy.y, "cyan")); // Explosion bleue
+                    if (enemy.type === "small") {
+                        score += 100;
+                    }
+                    if (enemy.type === "medium") {
+                        score += 300;
+                    }
+                    enemis.splice(i, 1);
+                    updateScore();
+                    continue;
+                }
+
                 if (enemy.type === "small") {
                     score -= 50;
                 }
@@ -293,6 +437,30 @@ function updateGame() {
                         }, 1000);
                     }
                     break;
+                }
+            }
+        }
+
+
+        // Collision Beam vs Boss
+        if (boss && boss.life > 0 && isFiringBeam) {
+            if (Math.abs(player.x - boss.x) < (50 + boss.largeur) / 2 &&
+                boss.y < player.y + boss.hauteur / 2) {
+                // Dégats par frame (très rapide)
+                boss.life -= 0.5;
+                // Petite explosion visuelle
+                if (Math.random() < 0.2) explosions.push(new Explosion(boss.x + (Math.random() * 100 - 50), boss.y + (Math.random() * 100 - 50), "yellow"));
+
+                if (boss.life <= 0) {
+                    score += 2000;
+                    updateScore();
+                    explosions.push(new Explosion(boss.x, boss.y, "red"));
+
+                    setTimeout(() => {
+                        boss = null;
+                        gameState = 'WIN';
+                        win();
+                    }, 1000);
                 }
             }
         }
@@ -381,9 +549,75 @@ function win() {
 }
 
 /* Fonction de dessin du jeu, elle permet de dessiner le joueur, les lasers, les ennemis, le boss et les explosions */
+/* Fonction de dessin du jeu, elle permet de dessiner le joueur, les lasers, les ennemis, le boss et les explosions */
 function drawGame() {
+    drawStars(ctx);
     if (player) {
+        if (isFiringBeam) {
+            ctx.save();
+            ctx.translate(player.x, player.y);
+
+            // 1. La Bulle d'Energie
+            let radius = Math.max(player.largeur, player.hauteur) / 1.5 + 10;
+
+            // Effet pulsation
+            let pulse = Math.sin(Date.now() / 100) * 5;
+            radius += pulse;
+
+            ctx.beginPath();
+            ctx.arc(0, 0, radius, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(69, 2, 253, 0.3)";
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = "gold";
+            ctx.fill();
+            ctx.strokeStyle = "rgba(255, 215, 0, 0.8)";
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // 2. Le Rayon (Partie Haute) - Part du haut de la bulle vers le haut de l'écran
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = "gold";
+            ctx.fillStyle = "rgba(69, 2, 253, 0.8)";
+
+            // De -radius (haut de bulle) vers -player.y (haut écran)
+            // Hauteur = distance entre -radius et -player.y
+            // Start Y = -player.y
+            // End Y = -radius
+            // Rect(x, y, w, h) -> y doit être le point haut (-player.y), h doit être la hauteur (player.y - radius) - ATTENTION aux coordonnées
+            // On est en translation (player.x, player.y).
+            // Haut écran = -player.y
+            // Haut bulle = -radius
+            // On veut un rectangle de -player.y jusqu'à -radius.
+            // Start Y = -player.y. Height = (-radius) - (-player.y) = player.y - radius.
+            ctx.fillRect(-25, -player.y, 50, player.y - radius);
+
+            // Coeur blanc haut
+            ctx.fillStyle = "white";
+            ctx.shadowBlur = 10;
+            ctx.fillRect(-10, -player.y, 20, player.y - radius);
+
+            // 3. Le Rayon (Partie Basse) - Part du bas de la bulle vers le bas de l'écran
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = "gold";
+            ctx.fillStyle = "rgba(69, 2, 253, 0.8)";
+
+            // De radius (bas de bulle) vers canvas.height - player.y (bas écran)
+            // Start Y = radius
+            // Bas ecran relatif = canvas.height - player.y
+            // Height = (canvas.height - player.y) - radius
+            ctx.fillRect(-25, radius, 50, (canvas.height - player.y) - radius);
+
+            // Coeur blanc bas
+            ctx.fillStyle = "white";
+            ctx.shadowBlur = 10;
+            ctx.fillRect(-10, radius, 20, (canvas.height - player.y) - radius);
+
+            ctx.restore(); // Restore the state
+        }
+
         if (player.life > 0) player.draw(ctx);
+
+        bonuses.forEach(bonus => bonus.draw(ctx));
         lasers.forEach(laser => laser.draw(ctx));
         enemis.forEach(enemy => enemy.draw(ctx));
 

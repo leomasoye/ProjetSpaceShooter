@@ -20,7 +20,16 @@ Amélioration de l'affichage notemment en jeu.
 
 Ajout de commentaires, prochaine étape potentielle : gros refactor et organisation des fichiers pour plus de clarté
 
-Améliorations possibles dans le futur : ajout d'une trainée visuelle derrière le joueur, ajout de différents type de laser, ajout de bonus de vie ou de score, ajout de plus de sorte d'enemis (astéroides par exemple ne donnants pas de points)
+Améliorations possibles dans le futur : ajout de plus de sorte d'enemis (astéroides par exemple ne donnants pas de points)
+
+Ajout du système de **Bonus** :
+- **Bonus de Charge** : Orbes jaunes, rapportent 500 points et chargent une barre spéciale. 3 charges débloquent un **Rayon Laser** dévastateur pendant 5 secondes.
+- **Bonus de Bouclier** : Orbes verts marqués "S", offrent une invulnérabilité totale de 3 secondes. Les ennemis touchés sous bouclier sont détruits.
+
+Amélioration visuelle :
+- Ajout d'un **fond étoilé procédural** avec effet de parallaxe pour une sensation de vitesse.
+- Le Rayon Laser est maintenant un faisceau continu traversant tout l'écran.
+- Ajustement de la difficulté et de la durée des niveaux.
 
 ## Documentation Technique
 
@@ -82,4 +91,15 @@ Gère les particules d'explosion.
 - **`constructor(x, y, color)`** : Crée un système de particules. Si la couleur est "red" (Boss/Joueur), génère une explosion plus massive.
 - **`update()`** : Met à jour la position et la transparence des particules.
 - **`draw(ctx)`** : Dessine les particules avec effet de transparence.
+
+#### 9. `bonus.js` (Classe Bonus)
+Hérite de `objet`. Gère les items ramassables.
+- **`type`** : "charge" (jaune) ou "shield" (vert).
+- **`draw(ctx)`** : Dessine une orbe brillante avec un symbole (+ ou S).
+- **`move()`** : Déplace le bonus vers le bas.
+
+### Mécaniques Spéciales
+- **Fond Étoilé** : Géré directement dans `script.js` via `initStars()`, `updateStars()` et `drawStars()` pour un effet de défilement fluide.
+- **Rayon Laser** : Une fois la barre de bonus pleine (3 charges), le joueur tire un rayon continu (dessiné via `fillRect`) qui traverse l'écran et inflige des dégâts constants.
+- **Bouclier** : Géré par l'état `shieldActive` du joueur. Période d'invulnérabilité où les collisions avec les ennemis sont bénéfiques.
 
