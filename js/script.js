@@ -24,6 +24,8 @@ const MAX_BONUS_CHARGE = 3;
 let isFiringBeam = false;
 let stars = [];
 
+
+
 function initStars() {
     stars = [];
     for (let i = 0; i < 100; i++) {
@@ -92,6 +94,11 @@ function init() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+
     //On écoute les evenements défini dans ecouteurs.js
     defineListeners();
 
@@ -119,6 +126,7 @@ function init() {
     });
 
     //On lance la boucle principale de jeu
+    gameState = 'MENU';
     mainLoop();
 }
 
@@ -137,7 +145,6 @@ function startGame(level) {
     bonuses = [];
     bonusCharge = 0;
     updateBonusUI();
-
     stars = [];
     initStars();
 
@@ -329,9 +336,6 @@ function updateGame() {
             // Collision avec le Laser Continu (Beam)
             if (isFiringBeam) {
                 // Vérification collision rectangulaire simple
-                // Le rayon fait ~50px de large et va du joueur jusqu'en haut
-                // Beam X center = player.x, Width = 50
-                // Enemy X center = enemy.x, Width = enemy.largeur
                 if (Math.abs(player.x - enemy.x) < (50 + enemy.largeur) / 2 &&
                     enemy.y < player.y + enemy.hauteur / 2) {
 
@@ -345,8 +349,8 @@ function updateGame() {
             }
 
             if (player.collide(enemy)) {
-                if (player.shieldActive) {
-                    // Bouclier actif : on détruit l'ennemi sans prendre de dégats et on gagne du score
+                if (player.shieldActive || isFiringBeam) {
+                    // Bouclier ou Rayon actif : on détruit l'ennemi sans prendre de dégats et on gagne du score
                     explosions.push(new Explosion(enemy.x, enemy.y, "cyan")); // Explosion bleue
                     if (enemy.type === "small") {
                         score += 100;
@@ -407,17 +411,19 @@ function updateGame() {
             }
 
             if (player.collide(boss)) {
-                player.life = 0;
+                if (!isFiringBeam) {
+                    player.life = 0;
 
-                updateScore();
-                explosions.push(new Explosion(player.x, player.y, "red"));
-                if (player.life <= 0) {
-                    setTimeout(() => {
-                        gameState = 'GAMEOVER';
-                        gameOver();
-                    }, 1000);
+                    updateScore();
+                    explosions.push(new Explosion(player.x, player.y, "red"));
+                    if (player.life <= 0) {
+                        setTimeout(() => {
+                            gameState = 'GAMEOVER';
+                            gameOver();
+                        }, 1000);
+                    }
+                    player.updateLife();
                 }
-                player.updateLife();
             }
 
             for (let j = lasers.length - 1; j >= 0; j--) {
@@ -426,7 +432,7 @@ function updateGame() {
                     lasers.splice(j, 1);
                     boss.life--;
                     if (boss.life <= 0) {
-                        score += 2000;
+                        score += 7000;
                         updateScore();
                         explosions.push(new Explosion(boss.x, boss.y, "red"));
 
@@ -442,17 +448,17 @@ function updateGame() {
         }
 
 
-        // Collision Beam vs Boss
+        // Collision
         if (boss && boss.life > 0 && isFiringBeam) {
             if (Math.abs(player.x - boss.x) < (50 + boss.largeur) / 2 &&
                 boss.y < player.y + boss.hauteur / 2) {
                 // Dégats par frame (très rapide)
                 boss.life -= 0.5;
-                // Petite explosion visuelle
+                // Petite explosion
                 if (Math.random() < 0.2) explosions.push(new Explosion(boss.x + (Math.random() * 100 - 50), boss.y + (Math.random() * 100 - 50), "yellow"));
 
                 if (boss.life <= 0) {
-                    score += 2000;
+                    score += 7000;
                     updateScore();
                     explosions.push(new Explosion(boss.x, boss.y, "red"));
 
@@ -473,6 +479,11 @@ function updateGame() {
                 continue;
             }
             if (player.collide(laser)) {
+                if (player.shieldActive || isFiringBeam) {
+                    // Invulnérable aux lasers du boss
+                    bossLasers.splice(i, 1);
+                    continue;
+                }
                 player.life--;
                 player.updateLife();
                 bossLasers.splice(i, 1);
@@ -505,9 +516,19 @@ function updateGame() {
 function mainLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // On dessine le fond étoilé quel que soit l'état du jeu (Menu, Jeu, GameOver...)
+    // Cela permet de respecter l'exigence "dessiné 60 fois par seconde dans la boucle"
+    // Même si l'UI (boutons) est en HTML par dessus. (je ne sais pas si c'est correct, désolé)
+    if (stars.length === 0) initStars();
+    updateStars();
+    drawStars(ctx);
+
     if (gameState === 'GAME') {
         updateGame();
         drawGame();
+    } else if (gameState === 'MENU') {
+    } else if (gameState === 'GAMEOVER') {
+    } else if (gameState === 'WIN') {
     }
 
     requestId = requestAnimationFrame(mainLoop);
@@ -549,9 +570,7 @@ function win() {
 }
 
 /* Fonction de dessin du jeu, elle permet de dessiner le joueur, les lasers, les ennemis, le boss et les explosions */
-/* Fonction de dessin du jeu, elle permet de dessiner le joueur, les lasers, les ennemis, le boss et les explosions */
 function drawGame() {
-    drawStars(ctx);
     if (player) {
         if (isFiringBeam) {
             ctx.save();
@@ -580,15 +599,6 @@ function drawGame() {
             ctx.fillStyle = "rgba(69, 2, 253, 0.8)";
 
             // De -radius (haut de bulle) vers -player.y (haut écran)
-            // Hauteur = distance entre -radius et -player.y
-            // Start Y = -player.y
-            // End Y = -radius
-            // Rect(x, y, w, h) -> y doit être le point haut (-player.y), h doit être la hauteur (player.y - radius) - ATTENTION aux coordonnées
-            // On est en translation (player.x, player.y).
-            // Haut écran = -player.y
-            // Haut bulle = -radius
-            // On veut un rectangle de -player.y jusqu'à -radius.
-            // Start Y = -player.y. Height = (-radius) - (-player.y) = player.y - radius.
             ctx.fillRect(-25, -player.y, 50, player.y - radius);
 
             // Coeur blanc haut
@@ -602,9 +612,6 @@ function drawGame() {
             ctx.fillStyle = "rgba(69, 2, 253, 0.8)";
 
             // De radius (bas de bulle) vers canvas.height - player.y (bas écran)
-            // Start Y = radius
-            // Bas ecran relatif = canvas.height - player.y
-            // Height = (canvas.height - player.y) - radius
             ctx.fillRect(-25, radius, 50, (canvas.height - player.y) - radius);
 
             // Coeur blanc bas
@@ -612,7 +619,7 @@ function drawGame() {
             ctx.shadowBlur = 10;
             ctx.fillRect(-10, radius, 20, (canvas.height - player.y) - radius);
 
-            ctx.restore(); // Restore the state
+            ctx.restore();
         }
 
         if (player.life > 0) player.draw(ctx);

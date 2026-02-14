@@ -10,7 +10,7 @@ Ajout des enemis, collisions, vies scores et explosions (phase de jeu presque co
 
 Ajout des différents niveaux, boss en cours
 
-Aide de l'IA sur les formules de maths (deplacement collisions etc), utilisation pour la génération de l'explosion et pour les images, je m'en suis aussi servi au départ pour canva.
+Aide de l'IA sur les formules de maths (deplacement collisions etc), utilisation pour la génération de l'explosion et pour les images, je m'en suis aussi servi au départ pour canva et pour des renseignements/ génération d'une partie de la doc.
 
 Gestion de la victoire / défaite, victoire nécessaire pour passer au niveau suivant.
 

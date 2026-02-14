@@ -1,4 +1,5 @@
 import objet from "./objet.js";
+import { Assets } from "./assets.js";
 
 export default class Enemis extends objet {
 
@@ -7,18 +8,15 @@ export default class Enemis extends objet {
         this.type = type;
         if (type === "small") {
             this.speed = 2;
-            this.image = new Image();
-            this.image.src = "assets/images/enemy.png";
+            this.image = Assets.enemySmall;
         }
         if (type === "medium") {
             this.speed = 3;
-            this.image = new Image();
-            this.image.src = "assets/images/bigEnemy.png";
+            this.image = Assets.enemyMedium;
         }
         if (type === "large") {
             this.speed = 0.01;
-            this.image = new Image();
-            this.image.src = "assets/images/boss.png";
+            this.image = Assets.enemyBoss;
         }
     }
 

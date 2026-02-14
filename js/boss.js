@@ -1,5 +1,6 @@
 import objet from "./objet.js";
 import Laser from "./laser.js";
+import { Assets } from "./assets.js";
 
 export default class boss extends objet {
 
@@ -7,8 +8,7 @@ export default class boss extends objet {
         super(x, y, couleur, largeur, hauteur);
         this.speed = 0.1;
         this.dx = 1;
-        this.image = new Image();
-        this.image.src = "assets/images/boss.png";
+        this.image = Assets.enemyBoss;
         this.life = 30;
         this.maxLife = 30;
         this.lastShot = 0;

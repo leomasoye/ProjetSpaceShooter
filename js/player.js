@@ -1,11 +1,11 @@
 import objet from "./objet.js";
+import { Assets } from "./assets.js";
 
 export default class Player extends objet {
 
     constructor(x, y, couleur, largeur, hauteur) {
         super(x, y, couleur, largeur, hauteur);
-        this.image = new Image();
-        this.image.src = "assets/images/player.png";
+        this.image = Assets.player;
         this.life = 3;
         this.updateLife();
     }
